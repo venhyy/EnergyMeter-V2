@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Energy Monitor</title>
+  
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  
+  <style>
+    .card-header {
+      background-color: #007bff;
+      color: #fff;
+      font-size: 20px;
+    }
+    .card-body {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+              <a class="navbar-brand" href="#">ESP32 Energy Monitor</a>
+              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                  <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#">Settings</a>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+          </div>
+    
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                  <h4 class="my-0 font-weight-normal">Device 1</h4>
+                </div>
+                <div class="card-body">
+                  <h1 class="card-title pricing-card-title" id="device1_voltage">--</h1>
+                  <ul class="list-unstyled mt-3 mb-4">
+                    <li>Current: <span id="device1_current">--</span></li>
+                    <li>Power: <span id="device1_power">--</span></li>
+                    <li>Frequency: <span id="device1_frequency">--</span></li>
+                    <li>Power Factor: <span id="device1_power_factor">--</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                  <h4 class="my-0 font-weight-normal">Device 2</h4>
+                </div>
+                <div class="card-body">
+                  <h1 class="card-title pricing-card-title" id="device2_voltage">--</h1>
+                  <ul class="list-unstyled mt-3 mb-4">
+                    <li>Current: <span id="device2_current">--</span></li>
+                    <li>Power: <span id="device2_power">--</span></li>
+                    <li>Frequency: <span id="device2_frequency">--</span></li>
+                    <li>Power Factor: <span id="device2_power_factor">--</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                  <h4 class="my-0 font-weight-normal">Device 3</h4>
+                </div>
+                <div class="card-body">
+                  <h1 class="card-title pricing-card-title" id="device3_voltage">--</h1>
+                  <ul class="list-unstyled mt-3 mb-4">
+                    <li>Current: <span id="device3_current">--</span></li>
+                    <li>Power: <span id="device3_power">--</span></li>
+                    <li>Frequency: <span id="device3_frequency">--</span></li>
+                    <li>Power Factor: <span id="device3_power_factor">--</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+            // Create a websocket connection
+const socket = new WebSocket('ws://' + location.host + '/ws');
+
+// When the connection is established
+socket.addEventListener('open', function(event) {
+  console.log('WebSocket connected');
+});
+
+// When the connection is closed
+socket.addEventListener('close', function(event) {
+  console.log('WebSocket disconnected');
+});
+
+// When a message is received from the server
+socket.addEventListener('message', function(event) {
+  const data = JSON.parse(event.data);
+
+  // Update measurement values on the dashboard
+  document.getElementById('voltage-1').innerHTML = data[0].voltage.toFixed(2) + ' V';
+  document.getElementById('current-1').innerHTML = data[0].current.toFixed(2) + ' A';
+  document.getElementById('power-1').innerHTML = data[0].power.toFixed(2) + ' W';
+  document.getElementById('frequency-1').innerHTML = data[0].frequency.toFixed(2) + ' Hz';
+  document.getElementById('pf-1').innerHTML = data[0].pf.toFixed(2);
+
+  document.getElementById('voltage-2').innerHTML = data[1].voltage.toFixed(2) + ' V';
+  document.getElementById('current-2').innerHTML = data[1].current.toFixed(2) + ' A';
+  document.getElementById('power-2').innerHTML = data[1].power.toFixed(2) + ' W';
+  document.getElementById('frequency-2').innerHTML = data[1].frequency.toFixed(2) + ' Hz';
+  document.getElementById('pf-2').innerHTML = data[1].pf.toFixed(2);
+
+  document.getElementById('voltage-3').innerHTML = data[2].voltage.toFixed(2) + ' V';
+  document.getElementById('current-3').innerHTML = data[2].current.toFixed(2) + ' A';
+  document.getElementById('power-3').innerHTML = data[2].power.toFixed(2) + ' W';
+  document.getElementById('frequency-3').innerHTML = data[2].frequency.toFixed(2) + ' Hz';
+  document.getElementById('pf-3').innerHTML = data[2].pf.toFixed(2);
+});
+
+// Send a message to the server
+function sendMessage(message) {
+  socket.send(message);
+}
+</script>
+</body>
