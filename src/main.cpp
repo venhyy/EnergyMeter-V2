@@ -5,10 +5,10 @@
 #include <PZEM004Tv30.h>
 #include <AsyncTCP.h>
 #include <ArduinoJson.h>
-#include <HardwareSerial.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <HardwareSerial.h>
 
 const char *ssid = "ASUS";
 const char *password = "asus1337";
@@ -23,10 +23,27 @@ AsyncWebSocket ws("/ws");
 #define PZEM_DEFAULT_TIMEOUT 1000
 unsigned long lastMeasurementTime[MAX_PZEM];
 
+#define CONSOLE_SERIAL Serial
+
+HardwareSerial ESP32Serial1(1);
+HardwareSerial ESP32Serial2(2);
+HardwareSerial ESP32Serial3(3);
+
+#define RX1 16
+#define TX1 17
+#define RX2 30
+#define TX2 31
+#define RX3 21
+#define TX3 22
+// inicializace sériových linek 1 a 2
+
 PZEM004Tv30 pzem[MAX_PZEM] = {
-    PZEM004Tv30(Serial2, 16, 17),
-    PZEM004Tv30(Serial2, 18, 19),
-    PZEM004Tv30(Serial2, 20, 21)};
+    PZEM004Tv30(ESP32Serial1, 16, 17, 0x07),
+    PZEM004Tv30(ESP32Serial2, 18, 19, 0x08),
+    PZEM004Tv30(ESP32Serial3, 20, 21, 0x09),
+};
+
+uint8_t addr = 0x07; // THIS IS THE ADDRESS
 
 void sendMeasurementData()
 {
@@ -97,8 +114,11 @@ void serveIndexHtml(AsyncWebServerRequest *request)
 
 void setup()
 {
-  Serial.begin(9600);
-  Serial2.begin(115200, SERIAL_8N1, 17, 16); // TX on pin 17, RX on pin 16
+  Serial.begin(115200);
+  // Serial2.begin(115200, SERIAL_8N1, 17, 16); // TX on pin 17, RX on pin 16
+  ESP32Serial1.begin(9600, SERIAL_8N1, 16, 17);
+  ESP32Serial2.begin(9600, SERIAL_8N1, 18, 19);
+  ESP32Serial3.begin(9600, SERIAL_8N1, 20, 21);
   SPIFFS.begin();
 
   // Connect to Wi-Fi network
@@ -123,6 +143,7 @@ void setup()
 
   ArduinoOTA
       .onStart([]()
+
                {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
@@ -155,33 +176,89 @@ void setup()
 void loop()
 {
   // Handle WebSocket events
+  // pzem.setAddress(addr);
   ws.cleanupClients();
 
   // OTA handler
   ArduinoOTA.handle(); // Check for OTA updates
 
   static unsigned long prevTime = 0;
-  if (millis() - prevTime >= 5000)
+  if (millis() - prevTime >= 1000)
   {
+
     StaticJsonDocument<300> doc;
     JsonArray arr = doc.to<JsonArray>();
 
     for (int i = 0; i < 3; i++)
     {
-      JsonObject obj = arr.createNestedObject();
 
+      CONSOLE_SERIAL.print("Custom Address:");
+      CONSOLE_SERIAL.println(pzem[i].readAddress(), HEX);
+
+      // Read the data from the sensor
       float voltage = pzem[i].voltage();
       float current = pzem[i].current();
       float power = pzem[i].power();
       float energy = pzem[i].energy();
       float frequency = pzem[i].frequency();
-      float powerFactor = pzem[i].pf();
+      float pf = pzem[i].pf();
 
+      // Check if the data is valid
+      if (isnan(voltage))
+      {
+        CONSOLE_SERIAL.println("Error reading voltage");
+      }
+      else if (isnan(current))
+      {
+        CONSOLE_SERIAL.println("Error reading current");
+      }
+      else if (isnan(power))
+      {
+        CONSOLE_SERIAL.println("Error reading power");
+      }
+      else if (isnan(energy))
+      {
+        CONSOLE_SERIAL.println("Error reading energy");
+      }
+      else if (isnan(frequency))
+      {
+        CONSOLE_SERIAL.println("Error reading frequency");
+      }
+      else if (isnan(pf))
+      {
+        CONSOLE_SERIAL.println("Error reading power factor");
+      }
+      else
+      {
+
+        // Print the values to the Serial console
+        CONSOLE_SERIAL.print("Voltage: ");
+        CONSOLE_SERIAL.print(voltage);
+        CONSOLE_SERIAL.println("V");
+        CONSOLE_SERIAL.print("Current: ");
+        CONSOLE_SERIAL.print(current);
+        CONSOLE_SERIAL.println("A");
+        CONSOLE_SERIAL.print("Power: ");
+        CONSOLE_SERIAL.print(power);
+        CONSOLE_SERIAL.println("W");
+        CONSOLE_SERIAL.print("Energy: ");
+        CONSOLE_SERIAL.print(energy, 3);
+        CONSOLE_SERIAL.println("kWh");
+        CONSOLE_SERIAL.print("Frequency: ");
+        CONSOLE_SERIAL.print(frequency, 1);
+        CONSOLE_SERIAL.println("Hz");
+        CONSOLE_SERIAL.print("PF: ");
+        CONSOLE_SERIAL.println(pf);
+      }
+
+      CONSOLE_SERIAL.println();
+
+      JsonObject obj = arr.createNestedObject();
       obj["voltage"] = voltage;
       obj["current"] = current;
       obj["power"] = power;
       obj["frequency"] = frequency;
-      obj["pf"] = powerFactor;
+      obj["pf"] = pf;
     }
 
     String jsonStr;
