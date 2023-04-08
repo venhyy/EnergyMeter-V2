@@ -60,8 +60,8 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 }
 
 void serveIndexHtml(AsyncWebServerRequest *request) {
-  if (SPIFFS.exists("/index.html")) {
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index.html", "text/html");
+  if (SPIFFS.exists("/index2.html")) {
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index2.html", "text/html");
     request->send(response);
   } else {
     request->send(404);
