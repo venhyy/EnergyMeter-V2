@@ -25,9 +25,9 @@ unsigned long lastMeasurementTime[MAX_PZEM];
 
 #define CONSOLE_SERIAL Serial
 
-HardwareSerial ESP32Serial1(1);
-HardwareSerial ESP32Serial2(2);
-HardwareSerial ESP32Serial3(3);
+HardwareSerial ESP32Serial1(0);
+HardwareSerial ESP32Serial2(1);
+HardwareSerial ESP32Serial3(2);
 
 #define RX1 16
 #define TX1 17
@@ -38,9 +38,9 @@ HardwareSerial ESP32Serial3(3);
 // inicializace sériových linek 1 a 2
 
 PZEM004Tv30 pzem[MAX_PZEM] = {
-    PZEM004Tv30(ESP32Serial1, 16, 17, 0x07),
-    PZEM004Tv30(ESP32Serial2, 18, 19, 0x08),
-    PZEM004Tv30(ESP32Serial3, 20, 21, 0x09),
+    PZEM004Tv30(ESP32Serial1, 3, 1, 0x01),
+    PZEM004Tv30(ESP32Serial2, 4, 2, 0x01),
+    PZEM004Tv30(ESP32Serial3, 16, 17, 0x01),
 };
 
 uint8_t addr = 0x07; // THIS IS THE ADDRESS
@@ -114,11 +114,11 @@ void serveIndexHtml(AsyncWebServerRequest *request)
 
 void setup()
 {
-  Serial.begin(115200);
-  // Serial2.begin(115200, SERIAL_8N1, 17, 16); // TX on pin 17, RX on pin 16
-  ESP32Serial1.begin(9600, SERIAL_8N1, 16, 17);
-  ESP32Serial2.begin(9600, SERIAL_8N1, 18, 19);
-  ESP32Serial3.begin(9600, SERIAL_8N1, 20, 21);
+  // Serial.begin(115200);
+  //  Serial2.begin(115200, SERIAL_8N1, 17, 16); // TX on pin 17, RX on pin 16
+  ESP32Serial1.begin(9600, SERIAL_8N1, 3, 1);
+  ESP32Serial2.begin(9600, SERIAL_8N1, 4, 2);
+  ESP32Serial3.begin(9600, SERIAL_8N1, 16, 17);
   SPIFFS.begin();
 
   // Connect to Wi-Fi network
@@ -128,8 +128,8 @@ void setup()
     delay(1000);
     Serial.println("Connecting to WiFi...");
   }
-  Serial.println("Connected to WiFi");
-  Serial.println(WiFi.localIP());
+  // Serial.println("Connected to WiFi");
+  // Serial.println(WiFi.localIP());
 
   // Serve index.html file
   server.on("/", HTTP_GET, serveIndexHtml);
