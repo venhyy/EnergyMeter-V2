@@ -42,6 +42,7 @@
     <title>EnergyMeter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="data:," />
+    <script src="scripts.js"></script>
   </head>
 
   <body>
@@ -198,5 +199,102 @@
         </div>
       </div>
     </div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col">
+          <div class="card">
+            <div
+              id="chart-phase1"
+              class="container"
+              style="margin-top: 0px"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var chartT1;
+
+      function initializeChart() {
+        chartT1 = new Highcharts.Chart({
+          chart: {
+            renderTo: "chart-phase1",
+          },
+          title: {
+            text: "L1",
+          },
+          series: [
+            {
+              name: "Napětí",
+              showInLegend: false,
+              data: [],
+              color: "#059e8a",
+            },
+            {
+              name: "Proud",
+              showInLegend: false,
+              data: [],
+              yAxis: 1,
+              color: "red",
+            },
+          ],
+          plotOptions: {
+            line: {
+              animation: false,
+              dataLabels: {
+                enabled: false,
+              },
+            },
+          },
+          xAxis: {
+            type: "datetime",
+            dateTimeLabelFormats: {
+              second: "%H:%M:%S",
+            },
+          },
+          yAxis: [
+            {
+              title: {
+                text: "Napětí L1 (V)",
+              },
+            },
+            {
+              title: {
+                text: "Proud L1 (A)",
+              },
+              opposite: true,
+            },
+          ],
+          credits: {
+            enabled: false,
+          },
+          // Add exporting module with a button for changing timespan
+        });
+      }
+
+      // Your existing code to add data to the chart at 1-second intervals
+      setInterval(function () {
+        var x = new Date().getTime(),
+          y = Math.floor(Math.random() * 100);
+
+        // Add point to series 1
+        if (chartT1.series[0].data.length >= 10) {
+          chartT1.series[0].addPoint([x, y], true, true);
+        } else {
+          chartT1.series[0].addPoint([x, y], true, false);
+        }
+
+        // Add point to series 2
+        if (chartT1.series[1].data.length >= 10) {
+          chartT1.series[1].addPoint([x, y + 20], true, true);
+        } else {
+          chartT1.series[1].addPoint([x, y + 20], true, false);
+        }
+      }, 1000);
+
+      // Call the initializeChart function to set up the chart
+      initializeChart();
+    </script>
   </body>
 </html>
