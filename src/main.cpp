@@ -29,48 +29,11 @@ HardwareSerial ESP32Serial1(0);
 HardwareSerial ESP32Serial2(1);
 HardwareSerial ESP32Serial3(2);
 
-#define RX1 16
-#define TX1 17
-#define RX2 30
-#define TX2 31
-#define RX3 21
-#define TX3 22
-// inicializace sériových linek 1 a 2
-
 PZEM004Tv30 pzem[MAX_PZEM] = {
     PZEM004Tv30(ESP32Serial1, 3, 1, 0x01),
-    PZEM004Tv30(ESP32Serial2, 4, 2, 0x01),
-    PZEM004Tv30(ESP32Serial3, 16, 17, 0x01),
+    PZEM004Tv30(ESP32Serial2, 4, 2, 0x02),
+    PZEM004Tv30(ESP32Serial3, 16, 17, 0x03),
 };
-
-uint8_t addr = 0x07; // THIS IS THE ADDRESS
-
-void sendMeasurementData()
-{
-  if (ws.count() == 0)
-  {
-    return;
-  }
-
-  StaticJsonDocument<300> doc;
-  JsonArray arr = doc.to<JsonArray>();
-
-  for (int i = 0; i < 3; i++)
-  {
-    JsonObject obj = arr.createNestedObject();
-    obj["voltage"] = random(220, 240);
-    obj["current"] = random(5, 15) / 10.0;
-    obj["power"] = random(2200, 24000) / 10.0;
-    obj["frequency"] = random(49, 51) * 1.00;
-    obj["pf"] = random(80, 100) / 100.0;
-  }
-
-  String jsonStr;
-  serializeJson(doc, jsonStr);
-
-  // Send the JSON string over the WebSocket connection
-  ws.textAll(jsonStr);
-}
 
 // Define function to handle WebSocket events
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
@@ -101,9 +64,9 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 void serveIndexHtml(AsyncWebServerRequest *request)
 {
-  if (SPIFFS.exists("/index2.html"))
+  if (SPIFFS.exists("/index3.html"))
   {
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index2.html", "text/html");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index3.html", "text/html");
     request->send(response);
   }
   else
@@ -112,16 +75,25 @@ void serveIndexHtml(AsyncWebServerRequest *request)
   }
 }
 
+void serveStaticFiles()
+{
+  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index3.html");
+
+  // Optional: Serve additional files if needed
+  server.serveStatic("/scripts.js", SPIFFS, "/scripts.js");
+  server.serveStatic("/styles.css", SPIFFS, "/styles.css");
+}
+
 void setup()
 {
-  // Serial.begin(115200);
-  //  Serial2.begin(115200, SERIAL_8N1, 17, 16); // TX on pin 17, RX on pin 16
+
   ESP32Serial1.begin(9600, SERIAL_8N1, 3, 1);
   ESP32Serial2.begin(9600, SERIAL_8N1, 4, 2);
   ESP32Serial3.begin(9600, SERIAL_8N1, 16, 17);
   SPIFFS.begin();
 
   // Connect to Wi-Fi network
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -133,6 +105,7 @@ void setup()
 
   // Serve index.html file
   server.on("/", HTTP_GET, serveIndexHtml);
+  serveStaticFiles();
 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
@@ -175,12 +148,8 @@ void setup()
 
 void loop()
 {
-  // Handle WebSocket events
-  // pzem.setAddress(addr);
-  ws.cleanupClients();
-
-  // OTA handler
   ArduinoOTA.handle(); // Check for OTA updates
+  ws.cleanupClients();
 
   static unsigned long prevTime = 0;
   if (millis() - prevTime >= 1000)
@@ -265,7 +234,6 @@ void loop()
     serializeJson(doc, jsonStr);
     Serial.print(jsonStr);
     ws.textAll(jsonStr);
-    // sendMeasurementData();
     prevTime = millis();
   }
 }
